@@ -1,0 +1,13 @@
+# pip install -r requirements.txt
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+pydantic
+openai
+groq
+yt-dlp
+requests
+authlib
+httpx
+itsdangerous
