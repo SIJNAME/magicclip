@@ -1,9 +1,15 @@
 from fastapi import FastAPI
-from api.clips import router as clips_router
+from api.projects import router as projects_router
+from db import init_db
 
 app = FastAPI()
 
-app.include_router(clips_router, prefix="/clips", tags=["Clips"])
+@app.on_event("startup")
+def startup():
+    init_db()
+
+
+app.include_router(projects_router, prefix="/projects", tags=["Projects"])
 
 @app.get("/")
 def root():

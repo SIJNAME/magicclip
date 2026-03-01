@@ -1,5 +1,7 @@
 import os
 import subprocess
+from pathlib import Path
+
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -19,8 +21,12 @@ def transcribe_audio(file_path: str):
 
     return transcription.words  # raw word-level data
 
-def extract_audio(video_path: str) -> str:
-    audio_path = "extracted_audio.mp3"
+def extract_audio(video_path: str, output_path: str | None = None) -> str:
+    if output_path:
+        audio_path = output_path
+    else:
+        source = Path(video_path)
+        audio_path = str(source.with_suffix(".mp3"))
 
     subprocess.run([
         "ffmpeg",
@@ -29,6 +35,6 @@ def extract_audio(video_path: str) -> str:
         "-map", "a",
         audio_path,
         "-y"
-    ])
+    ], check=True)
 
     return audio_path
