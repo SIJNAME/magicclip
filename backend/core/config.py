@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+
+CONFIG_STORE = Path(__file__).resolve().parents[1] / "storage" / "scoring_weights.json"
 
 
 def _env_float(name: str, default: float) -> float:
@@ -46,4 +50,22 @@ class AppConfig:
     ai: AIEngineConfig = field(default_factory=AIEngineConfig)
 
 
+def _load_persisted_weights() -> dict[str, float]:
+    if not CONFIG_STORE.exists():
+        return {}
+    try:
+        return json.loads(CONFIG_STORE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def persist_scoring_weights(weights: ScoringWeights) -> None:
+    CONFIG_STORE.parent.mkdir(parents=True, exist_ok=True)
+    CONFIG_STORE.write_text(json.dumps(asdict(weights), indent=2), encoding="utf-8")
+
+
 CONFIG = AppConfig()
+_persisted = _load_persisted_weights()
+for _k, _v in _persisted.items():
+    if hasattr(CONFIG.scoring, _k):
+        setattr(CONFIG.scoring, _k, float(_v))

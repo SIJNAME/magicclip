@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Dict, List
 
 from core.ai.llm_client import LLMClient
@@ -20,7 +21,7 @@ def enrich_words_with_ai(words: list[dict], llm_client: LLMClient | None = None)
     enriched_all: List[dict] = []
     for start in range(0, len(compact), BATCH_SIZE):
         batch = compact[start : start + BATCH_SIZE]
-        messages = prompt.render({"words_json": str(batch)})
+        messages = prompt.render({"words_json": json.dumps(batch, ensure_ascii=False)})
         parsed, _ = client.chat_json(messages, temperature=0.2)
         items = parsed.get("items", [])
         if isinstance(items, list):

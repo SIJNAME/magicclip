@@ -10,17 +10,26 @@ from core.ai.prompt_registry import PROMPTS, serialize_segments
 from core.config import CONFIG
 from core.intelligence.deduplication import filter_semantic_duplicates
 from core.intelligence.retention import predict_retention
-from core.intelligence.scoring import compute_clip_score
+from core.intelligence.retention_model import RetentionModel
+from core.intelligence.scoring import build_retention_features, combine_with_retention_model, compute_clip_score
 from core.intelligence.segmentation import semantic_segment
 
 logger = logging.getLogger(__name__)
-llm_client = LLMClient()
+llm_client: LLMClient | None = None
+retention_model = RetentionModel()
+
+
+def _get_llm_client() -> LLMClient:
+    global llm_client
+    if llm_client is None:
+        llm_client = LLMClient()
+    return llm_client
 
 
 def generate_clip_suggestions(transcript_segments: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     prompt = PROMPTS.get("clip_candidates", "v1")
     messages = prompt.render({"segments_json": serialize_segments(transcript_segments)})
-    parsed, usage = llm_client.chat_json(messages, temperature=0.35)
+    parsed, usage = _get_llm_client().chat_json(messages, temperature=0.35)
     return parsed.get("clips", []), {
         "token_usage": sum(u.total_tokens for u in usage),
         "ai_cost_estimate": round(sum(u.estimated_cost_usd for u in usage), 6),
@@ -73,8 +82,26 @@ def select_clips(words: list[dict]) -> list[dict]:
         segment, prev_segment = _find_segment_for_clip(clip, segments)
         if not segment:
             continue
-        score, scoring_breakdown = compute_clip_score(clip, segment, prev_segment)
+
+        hybrid_score, scoring_breakdown = compute_clip_score(clip, segment, prev_segment)
         retention = predict_retention(segment, scoring_breakdown)
+
+        predicted_retention = retention_model.predict(
+            build_retention_features(clip, segment, scoring_breakdown),
+            heuristic_fallback=retention["retention_score"],
+        )
+        scoring_breakdown["predicted_retention"] = predicted_retention
+
+        if retention_model.model is not None:
+            score = combine_with_retention_model(
+                hybrid_score=hybrid_score,
+                predicted_retention=predicted_retention,
+                rewatch_score=retention["rewatch_score"],
+                hook_score=scoring_breakdown["hook_score"],
+            )
+        else:
+            score = hybrid_score
+
         if score < min_score:
             continue
         scored.append(

@@ -24,8 +24,16 @@ class LLMUsage:
 
 class LLMClient:
     def __init__(self, api_key: str | None = None, client: OpenAI | None = None) -> None:
-        self.client = client or OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        self._api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.client = client
         self.config = CONFIG.ai
+
+    def _ensure_client(self) -> OpenAI:
+        if self.client is None:
+            if not self._api_key:
+                raise RuntimeError("OPENAI_API_KEY is required for live LLM calls")
+            self.client = OpenAI(api_key=self._api_key)
+        return self.client
 
     @staticmethod
     def _estimate_token_count(messages: list[dict[str, str]]) -> int:
@@ -57,6 +65,7 @@ class LLMClient:
         return chunks or [messages]
 
     def chat_json(self, messages: list[dict[str, str]], temperature: float = 0.2) -> tuple[dict[str, Any], list[LLMUsage]]:
+        client = self._ensure_client()
         model_chain = (self.config.primary_model, *self.config.fallback_models)
         payload_parts = self._split_messages(messages)
         merged: dict[str, Any] = {}
@@ -66,7 +75,7 @@ class LLMClient:
             last_exc: Exception | None = None
             for model in model_chain:
                 try:
-                    response = self.client.chat.completions.create(
+                    response = client.chat.completions.create(
                         model=model,
                         messages=part,
                         temperature=temperature,
@@ -91,7 +100,7 @@ class LLMClient:
                         else:
                             merged[key] = value
                     break
-                except Exception as exc:  # fallback path
+                except Exception as exc:
                     last_exc = exc
                     continue
             else:

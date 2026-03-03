@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from core.config import CONFIG
+from core.intelligence.retention_model import RetentionModel
+
+
+MODEL = RetentionModel()
 
 
 def _clamp_100(value: float) -> float:
@@ -29,6 +33,21 @@ def topic_transition_weight(segment: dict[str, Any], prev_segment: dict[str, Any
     return _clamp_100((1 - overlap) * 100)
 
 
+def build_retention_features(clip: dict[str, Any], segment: dict[str, Any], breakdown: dict[str, float]) -> dict[str, float]:
+    text = segment.get("text", "")
+    segment_length = max(0.1, float(segment.get("end", 0.0)) - float(segment.get("start", 0.0)))
+    return {
+        "llm_score": breakdown["llm_score"],
+        "emotion_score": breakdown["emotion_score"],
+        "hook_score": breakdown["hook_score"],
+        "topic_score": _to_100(float(segment.get("topic_score", 0))),
+        "speech_rate_spike": breakdown["speech_speed_spike"],
+        "curiosity_score": breakdown["curiosity_score"],
+        "segment_length": segment_length,
+        "rhetorical_question_flag": 1.0 if "?" in text else 0.0,
+    }
+
+
 def compute_clip_score(clip: dict[str, Any], segment: dict[str, Any], prev_segment: dict[str, Any] | None = None) -> tuple[int, dict[str, float]]:
     weights = CONFIG.scoring
     breakdown = {
@@ -39,7 +58,7 @@ def compute_clip_score(clip: dict[str, Any], segment: dict[str, Any], prev_segme
         "speech_speed_spike": speech_speed_spike(segment),
         "curiosity_score": _to_100(float(clip.get("curiosity_score", 50))),
     }
-    final_score = (
+    hybrid_score = (
         weights.llm_score * breakdown["llm_score"]
         + weights.emotion_score * breakdown["emotion_score"]
         + weights.hook_score * breakdown["hook_score"]
@@ -47,4 +66,21 @@ def compute_clip_score(clip: dict[str, Any], segment: dict[str, Any], prev_segme
         + weights.speech_speed_spike * breakdown["speech_speed_spike"]
         + weights.curiosity_score * breakdown["curiosity_score"]
     )
-    return int(round(_clamp_100(final_score))), breakdown
+
+    breakdown["hybrid_score"] = _clamp_100(hybrid_score)
+    return int(round(_clamp_100(hybrid_score))), breakdown
+
+
+def combine_with_retention_model(
+    hybrid_score: float,
+    predicted_retention: float,
+    rewatch_score: float,
+    hook_score: float,
+) -> int:
+    score = (
+        0.30 * _clamp_100(hybrid_score)
+        + 0.40 * _clamp_100(predicted_retention)
+        + 0.15 * _clamp_100(rewatch_score)
+        + 0.15 * _clamp_100(hook_score)
+    )
+    return int(round(_clamp_100(score)))
