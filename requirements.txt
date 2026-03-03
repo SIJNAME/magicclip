@@ -11,3 +11,10 @@ requests
 authlib
 httpx
 itsdangerous
+
+scikit-learn
+numpy
+
+opencv-python-headless
+redis
+rq
