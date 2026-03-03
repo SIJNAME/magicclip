@@ -5,7 +5,7 @@ import logging
 import time
 from pathlib import Path
 
-from video_renderer.config import CONFIG
+from backend.video_renderer.config import CONFIG
 
 logger = logging.getLogger(__name__)
 

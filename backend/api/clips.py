@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 
-from core.project_service import (
+from backend.core.project_service import (
     create_clip_performance,
     get_clip,
     get_video_render_job,
 )
-from schemas.clip_schema import ClipPerformanceCreateRequest, ClipPerformanceItem
-from schemas.render_schema import VideoRenderJobResponse
-from video_renderer.worker import enqueue_render_job
+from backend.schemas.clip_schema import ClipPerformanceCreateRequest, ClipPerformanceItem
+from backend.schemas.render_schema import VideoRenderJobResponse
+from backend.video_renderer.worker import enqueue_render_job
 
 router = APIRouter()
 

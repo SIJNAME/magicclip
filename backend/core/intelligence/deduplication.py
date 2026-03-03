@@ -4,7 +4,7 @@ import math
 import re
 from typing import Any
 
-from core.config import CONFIG
+from backend.core.config import CONFIG
 
 TOKEN_RE = re.compile(r"[a-zA-Z0-9']+")
 

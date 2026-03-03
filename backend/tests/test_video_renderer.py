@@ -6,18 +6,18 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-from core.project_service import get_video_render_job
-from db import get_connection, init_db
-from video_renderer.caption_engine import render_ass_subtitles
-from video_renderer.ffmpeg_helpers import (
+from backend.core.project_service import get_video_render_job
+from backend.db import get_connection, init_db
+from backend.video_renderer.caption_engine import render_ass_subtitles
+from backend.video_renderer.ffmpeg_helpers import (
     ass_to_ffmpeg_filter,
     cut_and_crop,
     encode_for_tiktok,
     ffprobe_video_info,
     overlay_subtitles,
 )
-from video_renderer.smart_crop import build_smart_crop_filter
-from video_renderer.worker import enqueue_render_job, process_job_by_id
+from backend.video_renderer.smart_crop import build_smart_crop_filter
+from backend.video_renderer.worker import enqueue_render_job, process_job_by_id
 
 try:
     import cv2
@@ -81,7 +81,7 @@ class VideoRendererTests(unittest.TestCase):
         vf = build_smart_crop_filter("/non/existing.mp4")
         self.assertIn("scale=1080:1920", vf)
 
-    @patch("video_renderer.ffmpeg_helpers.run_ffmpeg", return_value=(0, "", ""))
+    @patch("backend.video_renderer.ffmpeg_helpers.run_ffmpeg", return_value=(0, "", ""))
     def test_ffmpeg_stage_helpers(self, mocked_run):
         cut_and_crop("in.mp4", 1.0, 4.0, "crop=ih*(9/16):ih,scale=1080:1920", "raw.mp4")
         overlay_subtitles("raw.mp4", "sub.ass", "subtitled.mp4")

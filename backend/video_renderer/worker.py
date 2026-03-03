@@ -10,7 +10,7 @@ from typing import Any, Callable
 
 import requests
 
-from core.project_service import (
+from backend.core.project_service import (
     create_video_render_job,
     get_clip,
     get_next_queued_render_job,
@@ -19,8 +19,8 @@ from core.project_service import (
     get_video_render_job,
     update_video_render_job,
 )
-from video_renderer.config import CONFIG, default_mp4_options
-from video_renderer.renderer import render_clip
+from backend.video_renderer.config import CONFIG, default_mp4_options
+from backend.video_renderer.renderer import render_clip
 
 logger = logging.getLogger(__name__)
 
