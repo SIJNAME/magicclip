@@ -30,7 +30,14 @@ def _get_client() -> Groq:
 
 def _run_ffmpeg(command: list[str]) -> None:
     try:
-        subprocess.run(command, check=True, capture_output=True, text=True)
+        subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+        )
     except subprocess.CalledProcessError as exc:
         stderr = (exc.stderr or "").strip()
         raise RuntimeError(f"ffmpeg command failed: {' '.join(command)} | {stderr}") from exc
@@ -48,7 +55,14 @@ def _get_audio_duration_seconds(audio_path: str) -> float:
         audio_path,
     ]
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+        )
         return max(float(result.stdout.strip()), 0.0)
     except (ValueError, subprocess.CalledProcessError) as exc:
         raise RuntimeError(f"Unable to read audio duration for {audio_path}") from exc
