@@ -1,8 +1,8 @@
 import unittest
 
-from core.intelligence.deduplication import filter_semantic_duplicates
-from core.intelligence.scoring import compute_clip_score
-from core.intelligence.segmentation import semantic_segment
+from backend.core.intelligence.deduplication import filter_semantic_duplicates
+from backend.core.intelligence.scoring import compute_clip_score
+from backend.core.intelligence.segmentation import semantic_segment
 
 
 class IntelligenceTests(unittest.TestCase):

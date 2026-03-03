@@ -8,7 +8,7 @@ from typing import Any
 
 from openai import OpenAI
 
-from core.config import CONFIG
+from backend.core.config import CONFIG
 
 logger = logging.getLogger(__name__)
 

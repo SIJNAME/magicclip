@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from typing import Dict, List
 
-from core.ai.llm_client import LLMClient
-from core.ai.prompt_registry import PROMPTS
-from core.clip_service import select_clips
+from backend.core.ai.llm_client import LLMClient
+from backend.core.ai.prompt_registry import PROMPTS
+from backend.core.clip_service import select_clips
 
 BATCH_SIZE = 350
 

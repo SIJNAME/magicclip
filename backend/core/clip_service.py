@@ -5,14 +5,14 @@ import logging
 import time
 from typing import Any
 
-from core.ai.llm_client import LLMClient
-from core.ai.prompt_registry import PROMPTS, serialize_segments
-from core.config import CONFIG
-from core.intelligence.deduplication import filter_semantic_duplicates
-from core.intelligence.retention import predict_retention
-from core.intelligence.retention_model import RetentionModel
-from core.intelligence.scoring import build_retention_features, combine_with_retention_model, compute_clip_score
-from core.intelligence.segmentation import semantic_segment
+from backend.core.ai.llm_client import LLMClient
+from backend.core.ai.prompt_registry import PROMPTS, serialize_segments
+from backend.core.config import CONFIG
+from backend.core.intelligence.deduplication import filter_semantic_duplicates
+from backend.core.intelligence.retention import predict_retention
+from backend.core.intelligence.retention_model import RetentionModel
+from backend.core.intelligence.scoring import build_retention_features, combine_with_retention_model, compute_clip_score
+from backend.core.intelligence.segmentation import semantic_segment
 
 logger = logging.getLogger(__name__)
 llm_client: LLMClient | None = None

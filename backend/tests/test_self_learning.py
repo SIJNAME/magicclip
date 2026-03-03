@@ -4,9 +4,9 @@ from uuid import uuid4
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api.clips import router as clips_router
-from core.intelligence.scoring import combine_with_retention_model
-from db import get_connection, init_db
+from backend.api.clips import router as clips_router
+from backend.core.intelligence.scoring import combine_with_retention_model
+from backend.db import get_connection, init_db
 
 
 class SelfLearningTests(unittest.TestCase):

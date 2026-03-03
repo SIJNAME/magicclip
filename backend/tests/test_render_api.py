@@ -6,9 +6,9 @@ from uuid import uuid4
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api.render import router as render_router
-from core.project_service import update_video_render_job
-from db import get_connection, init_db
+from backend.api.render import router as render_router
+from backend.core.project_service import update_video_render_job
+from backend.db import get_connection, init_db
 
 
 class RenderApiTests(unittest.TestCase):

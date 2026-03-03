@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from collections import deque
 
-from video_renderer.ffmpeg_helpers import ffprobe_video_info
+from backend.video_renderer.ffmpeg_helpers import ffprobe_video_info
 
 try:
     import cv2
