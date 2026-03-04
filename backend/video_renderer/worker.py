@@ -6,7 +6,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import requests
 
@@ -31,6 +31,9 @@ except Exception:  # pragma: no cover
     Redis = None
     Queue = None
 
+if TYPE_CHECKING:
+    from rq import Queue as RQQueue
+
 
 @dataclass
 class VideoRenderJob:
@@ -45,7 +48,7 @@ class VideoRenderJob:
     logs: str
 
 
-def _redis_queue() -> Queue | None:
+def _redis_queue() -> "RQQueue | None":
     redis_url = os.getenv("MC_REDIS_URL")
     if not redis_url or Redis is None or Queue is None:
         return None

@@ -13,7 +13,7 @@ DEFAULT_CROP_GRAPH = "crop=ih*(9/16):ih,scale=1080:1920"
 def run_ffmpeg(args: list[str]) -> tuple[int, str, str]:
     cmd = ["ffmpeg", "-y", *args]
     logger.info("ffmpeg_command", extra={"cmd": " ".join(cmd)})
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore")
     return proc.returncode, proc.stdout, proc.stderr
 
 
@@ -36,6 +36,8 @@ def ffprobe_video_info(input_file: str) -> dict:
             ],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="ignore",
             check=False,
         )
     except FileNotFoundError:
