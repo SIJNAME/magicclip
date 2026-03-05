@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from backend.core.stt_service import transcribe_audio
-from backend.core.mapping_service import map_raw_words
-from backend.core.ai_enrich_service import enrich_words_with_ai
+from core.stt_service import transcribe_audio
+from core.mapping_service import map_raw_words
+from core.ai_enrich_service import enrich_words_with_ai
 
 router = APIRouter()
 

@@ -13,6 +13,16 @@ from backend.core.config import CONFIG
 logger = logging.getLogger(__name__)
 
 
+def safe_json_parse(text: str):
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        last_brace = text.rfind("}")
+        if last_brace != -1:
+            return json.loads(text[: last_brace + 1])
+        raise
+
+
 @dataclass
 class LLMUsage:
     model: str
@@ -79,10 +89,10 @@ class LLMClient:
                         model=model,
                         messages=part,
                         temperature=temperature,
-                        max_tokens=self.config.max_output_tokens,
+                        max_tokens=3000,
                         response_format={"type": "json_object"},
                     )
-                    parsed = json.loads(response.choices[0].message.content)
+                    parsed = safe_json_parse(response.choices[0].message.content or "{}")
                     usage = response.usage
                     total_tokens = getattr(usage, "total_tokens", 0) if usage else 0
                     usages.append(

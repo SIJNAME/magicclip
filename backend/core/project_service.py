@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from backend.db import get_connection
+from db import get_connection
 
 
 def _now_iso() -> str:

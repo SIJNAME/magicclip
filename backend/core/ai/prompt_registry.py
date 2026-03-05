@@ -43,9 +43,13 @@ PROMPTS.register(
         user_template=(
             "Select high-quality short-form clip candidates from transcript segments. "
             "Return strict JSON with key 'clips' containing an array of objects with: "
-            "start (float), end (float), llm_score (0-100), title, summary, curiosity_score (0-100).\n"
+            "s (float), e (float), llm_score (0-100), t (string), summary, curiosity_score (0-100).\n"
+            "Generate maximum 5 clips only.\n"
             "Use 20-60 second ranges when possible.\n"
-            "Transcript segments:\n{segments_json}"
+            "Transcript segments:\n{segments_json}\n"
+            "IMPORTANT:\n"
+            "If the output may exceed limits, shorten all strings.\n"
+            "Ensure the final character is }."
         ),
     )
 )

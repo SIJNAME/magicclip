@@ -37,7 +37,7 @@ class AIEngineConfig:
     primary_model: str = os.getenv("MC_PRIMARY_MODEL", "gpt-4o-mini")
     fallback_models: tuple[str, ...] = tuple(filter(None, os.getenv("MC_FALLBACK_MODELS", "gpt-4.1-mini").split(",")))
     max_input_tokens: int = _env_int("MC_MAX_INPUT_TOKENS", 3000)
-    max_output_tokens: int = _env_int("MC_MAX_OUTPUT_TOKENS", 1200)
+    max_output_tokens: int = _env_int("MC_MAX_OUTPUT_TOKENS", 3000)
     segmentation_batch_size: int = _env_int("MC_SEGMENT_BATCH", 24)
     clip_batch_size: int = _env_int("MC_CLIP_BATCH", 20)
     similarity_threshold: float = _env_float("MC_SIMILARITY_THRESHOLD", 0.80)

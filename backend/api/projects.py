@@ -5,9 +5,9 @@ from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from backend.core.ai_enrich_service import enrich_words_with_ai, select_clips
-from backend.core.mapping_service import map_words_to_segments
-from backend.core.project_service import (
+from core.ai_enrich_service import enrich_words_with_ai, select_clips
+from core.mapping_service import map_words_to_segments
+from core.project_service import (
     create_export,
     create_project,
     get_project,
@@ -18,9 +18,9 @@ from backend.core.project_service import (
     replace_project_clips,
     update_project,
 )
-from backend.core.stt_service import extract_audio, transcribe_audio
-from backend.core.youtube_service import download_youtube_video
-from backend.schemas.project_schema import (
+from core.stt_service import extract_audio, transcribe_audio
+from core.youtube_service import download_youtube_video
+from schemas.project_schema import (
     CreateYoutubeProjectRequest,
     ExportCreateRequest,
     ProjectDetail,

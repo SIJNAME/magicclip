@@ -11,9 +11,9 @@ try:
 except Exception:  # pragma: no cover
     LinearRegression = None
 
-from backend.core.config import CONFIG, persist_scoring_weights
-from backend.core.project_service import list_clip_training_samples
-from backend.db import get_connection
+from core.config import CONFIG, persist_scoring_weights
+from core.project_service import list_clip_training_samples
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 

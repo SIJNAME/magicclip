@@ -7,32 +7,37 @@ def build_clip_prompt(transcript_segments):
     prompt = f"""
 You are an expert short-form content strategist.
 
-From the transcript below, select 10–20 high-quality short-form clip candidates.
+From the transcript below, select high-quality short-form clip candidates.
+Generate maximum 5 clips only.
 
 Rules:
-- Each clip must be 20–60 seconds long
+- Each clip must be 20-60 seconds long
 - Must feel complete
 - Strong hook within first 3 seconds
 - Avoid incomplete thoughts
 
 For each clip:
 - Generate a clickbait-style title (max 60 characters)
-- Generate a 2–3 sentence insight-based summary (under 250 characters)
+- Generate a 2-3 sentence insight-based summary (under 250 characters)
 - Give a score (0-100)
 
 Return JSON only:
 
 [
   {{
-    "start": float,
-    "end": float,
+    "s": float,
+    "e": float,
     "score": int,
-    "title": "",
+    "t": "",
     "summary": ""
   }}
 ]
 
 Transcript:
 {transcript_text}
+
+IMPORTANT:
+If the output may exceed limits, shorten all strings.
+Ensure the final character is }}.
 """
     return prompt

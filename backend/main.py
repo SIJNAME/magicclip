@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 
-from backend.api.clips import router as clips_router
-from backend.api.projects import router as projects_router
-from backend.api.render import router as render_router
-from backend.db import init_db
-from backend.video_renderer.worker import RenderWorker
+from api.clips import router as clips_router
+from api.projects import router as projects_router
+from api.render import router as render_router
+from db import init_db
+from video_renderer.worker import RenderWorker
 
 app = FastAPI()
 _worker: RenderWorker | None = None

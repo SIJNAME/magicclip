@@ -17,6 +17,7 @@ from backend.core.intelligence.segmentation import semantic_segment
 logger = logging.getLogger(__name__)
 llm_client: LLMClient | None = None
 retention_model = RetentionModel()
+MAX_CLIP_CANDIDATES = 5
 
 
 def _get_llm_client() -> LLMClient:
@@ -30,7 +31,12 @@ def generate_clip_suggestions(transcript_segments: list[dict[str, Any]]) -> tupl
     prompt = PROMPTS.get("clip_candidates", "v1")
     messages = prompt.render({"segments_json": serialize_segments(transcript_segments)})
     parsed, usage = _get_llm_client().chat_json(messages, temperature=0.35)
-    return parsed.get("clips", []), {
+    clips = parsed.get("clips", [])
+    if isinstance(clips, list):
+        clips = clips[:MAX_CLIP_CANDIDATES]
+    else:
+        clips = []
+    return clips, {
         "token_usage": sum(u.total_tokens for u in usage),
         "ai_cost_estimate": round(sum(u.estimated_cost_usd for u in usage), 6),
     }
@@ -63,7 +69,11 @@ def select_clips(words: list[dict]) -> list[dict]:
     if not segments:
         return []
 
-    raw_clips, llm_observability = generate_clip_suggestions(segments)
+    try:
+        raw_clips, llm_observability = generate_clip_suggestions(segments)
+    except Exception as exc:
+        logger.warning("clip_generation_failed", extra={"error": str(exc)})
+        return []
     total_duration = max(0.0, float(words[-1].get("endTime", 0.0)) - float(words[0].get("startTime", 0.0))) if words else 0.0
 
     scored: list[dict[str, Any]] = []
@@ -72,8 +82,10 @@ def select_clips(words: list[dict]) -> list[dict]:
         if not isinstance(clip, dict):
             continue
         try:
-            clip["start"] = float(clip.get("start"))
-            clip["end"] = float(clip.get("end"))
+            clip_start = clip.get("s", clip.get("start"))
+            clip_end = clip.get("e", clip.get("end"))
+            clip["start"] = float(clip_start)
+            clip["end"] = float(clip_end)
         except (TypeError, ValueError):
             continue
         if clip["end"] <= clip["start"]:
@@ -109,7 +121,7 @@ def select_clips(words: list[dict]) -> list[dict]:
                 "start": clip["start"],
                 "end": clip["end"],
                 "score": score,
-                "title": str(clip.get("title", "Untitled clip")),
+                "title": str(clip.get("t", clip.get("title", "Untitled clip"))),
                 "summary": str(clip.get("summary", "")),
                 "scoring_breakdown": scoring_breakdown,
                 "retention": retention,
@@ -118,7 +130,8 @@ def select_clips(words: list[dict]) -> list[dict]:
 
     deduped = filter_semantic_duplicates(scored)
     deduped.sort(key=lambda c: c["score"], reverse=True)
-    final_clips = deduped[: get_dynamic_cap(total_duration)]
+    final_limit = min(MAX_CLIP_CANDIDATES, get_dynamic_cap(total_duration))
+    final_clips = deduped[:final_limit]
 
     logger.info(
         "clip_selection_complete",

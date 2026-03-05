@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Dict, List
 
-from backend.core.ai.llm_client import LLMClient
-from backend.core.ai.prompt_registry import PROMPTS
-from backend.core.clip_service import select_clips
+from core.ai.llm_client import LLMClient
+from core.ai.prompt_registry import PROMPTS
+from core.clip_service import select_clips
 
-BATCH_SIZE = 350
+logger = logging.getLogger(__name__)
+BATCH_SIZE = 120
 
 
 def enrich_words_with_ai(words: list[dict], llm_client: LLMClient | None = None):
@@ -22,7 +24,19 @@ def enrich_words_with_ai(words: list[dict], llm_client: LLMClient | None = None)
     for start in range(0, len(compact), BATCH_SIZE):
         batch = compact[start : start + BATCH_SIZE]
         messages = prompt.render({"words_json": json.dumps(batch, ensure_ascii=False)})
-        parsed, _ = client.chat_json(messages, temperature=0.2)
+        try:
+            parsed, _ = client.chat_json(messages, temperature=0.2)
+        except Exception as exc:
+            logger.warning(
+                "word_enrichment_batch_failed",
+                extra={
+                    "batch_start": start,
+                    "batch_size": len(batch),
+                    "error": str(exc),
+                },
+            )
+            continue
+
         items = parsed.get("items", [])
         if isinstance(items, list):
             enriched_all.extend(items)

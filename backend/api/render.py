@@ -5,9 +5,9 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from backend.core.project_service import get_video_render_job
-from backend.schemas.render_schema import RenderCreateRequest, VideoRenderJobResponse
-from backend.video_renderer.worker import enqueue_render_job
+from core.project_service import get_video_render_job
+from schemas.render_schema import RenderCreateRequest, VideoRenderJobResponse
+from video_renderer.worker import enqueue_render_job
 
 router = APIRouter()
 
@@ -30,7 +30,7 @@ def create_render_job(payload: RenderCreateRequest, request: Request):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     output_url = _build_output_url(request, job["id"])
-    from backend.core.project_service import update_video_render_job
+    from core.project_service import update_video_render_job
 
     job = update_video_render_job(job["id"], status=job["status"], output_url=output_url)
     return job

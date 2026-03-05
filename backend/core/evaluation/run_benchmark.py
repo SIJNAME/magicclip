@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from backend.core.evaluation.evaluator import evaluate_prediction_accuracy
-from backend.core.intelligence.retention_model import RetentionModel
-from backend.core.project_service import list_clip_training_samples
+from core.evaluation.evaluator import evaluate_prediction_accuracy
+from core.intelligence.retention_model import RetentionModel
+from core.project_service import list_clip_training_samples
 
 
 def main() -> None:

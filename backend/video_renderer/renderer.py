@@ -7,9 +7,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from backend.video_renderer.caption_engine import render_ass_subtitles
-from backend.video_renderer.ffmpeg_helpers import cut_and_crop, encode_for_tiktok, ffprobe_video_info, overlay_subtitles
-from backend.video_renderer.smart_crop import build_smart_crop_filter
+from video_renderer.caption_engine import render_ass_subtitles
+from video_renderer.ffmpeg_helpers import cut_and_crop, encode_for_tiktok, ffprobe_video_info, overlay_subtitles
+from video_renderer.smart_crop import build_smart_crop_filter
 
 logger = logging.getLogger(__name__)
 
