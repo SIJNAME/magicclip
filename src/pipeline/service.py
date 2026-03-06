@@ -1,10 +1,11 @@
-import os
+﻿import os
 import tempfile
 import threading
 
 from src.clip.service import suggest_clips
 from src.config import settings
 from src.db.repository import claim_job_for_processing, get_job, mark_job_completed, mark_job_failed, recover_timed_out_jobs, touch_job_heartbeat
+from src.pipeline.youtube_ingest import decode_youtube_source_key, download_youtube_audio_to_temp, download_youtube_video_segment_to_temp
 from src.queue.service import enqueue_dead_letter, get_queue
 from src.render.service import render_clip
 from src.storage.service import download_to_temp, upload_file
@@ -41,22 +42,38 @@ def enqueue_pipeline_job(user_id: str, source_key: str, requested_minutes: float
     return get_job(job["id"]) or job
 
 
-def run_pipeline(job_id: str) -> None:
-    job = get_job(job_id)
-    if not job:
-        return
-    if not claim_job_for_processing(job_id):
-        return
+def _run_youtube_pipeline(job: dict) -> tuple[list[dict], list[dict], dict, str, int]:
+    youtube_url = decode_youtube_source_key(str(job["source_key"]))
+    if not youtube_url:
+        raise RuntimeError("Invalid YouTube source key")
+
+    with tempfile.TemporaryDirectory(prefix="yt-pipeline-") as temp_dir:
+        audio_path = download_youtube_audio_to_temp(youtube_url, temp_dir)
+        segments = transcribe_segments(audio_path)
+        clips = suggest_clips(segments)
+        selected = clips[0]
+
+        clip_start = float(selected["start"])
+        clip_end = float(selected["end"])
+        segment_path = download_youtube_video_segment_to_temp(youtube_url, temp_dir, clip_start, clip_end)
+
+        output_temp_path = os.path.join(temp_dir, f"{job['id']}.mp4")
+        render_clip(
+            input_path=segment_path,
+            output_path=output_temp_path,
+            start=0.0,
+            end=max(0.1, clip_end - clip_start),
+        )
+        output_size_bytes = os.path.getsize(output_temp_path)
+        output_key = f"{settings.s3_output_prefix}/{job['user_id']}/{job['id']}.mp4"
+        upload_file(output_temp_path, output_key)
+
+    return segments, clips, selected, output_key, output_size_bytes
+
+
+def _run_storage_source_pipeline(job: dict) -> tuple[list[dict], list[dict], dict, str, int]:
     source_temp_path = ""
     output_temp_path = ""
-    stop_heartbeat = threading.Event()
-
-    def _heartbeat_loop() -> None:
-        while not stop_heartbeat.wait(settings.job_heartbeat_sec):
-            touch_job_heartbeat(job_id)
-
-    heartbeat_thread = threading.Thread(target=_heartbeat_loop, name=f"job-heartbeat-{job_id}", daemon=True)
-    heartbeat_thread.start()
     try:
         source_temp_path = download_to_temp(job["source_key"])
         segments = transcribe_segments(source_temp_path)
@@ -74,6 +91,34 @@ def run_pipeline(job_id: str) -> None:
         output_size_bytes = os.path.getsize(output_temp_path)
         output_key = f"{settings.s3_output_prefix}/{job['user_id']}/{job['id']}.mp4"
         upload_file(output_temp_path, output_key)
+        return segments, clips, selected, output_key, output_size_bytes
+    finally:
+        if source_temp_path and os.path.exists(source_temp_path):
+            os.remove(source_temp_path)
+        if output_temp_path and os.path.exists(output_temp_path):
+            os.remove(output_temp_path)
+
+
+def run_pipeline(job_id: str) -> None:
+    job = get_job(job_id)
+    if not job:
+        return
+    if not claim_job_for_processing(job_id):
+        return
+    stop_heartbeat = threading.Event()
+
+    def _heartbeat_loop() -> None:
+        while not stop_heartbeat.wait(settings.job_heartbeat_sec):
+            touch_job_heartbeat(job_id)
+
+    heartbeat_thread = threading.Thread(target=_heartbeat_loop, name=f"job-heartbeat-{job_id}", daemon=True)
+    heartbeat_thread.start()
+    try:
+        if decode_youtube_source_key(str(job["source_key"])):
+            segments, clips, selected, output_key, output_size_bytes = _run_youtube_pipeline(job)
+        else:
+            segments, clips, selected, output_key, output_size_bytes = _run_storage_source_pipeline(job)
+
         policy = get_plan_policy(job["user_id"])
         mark_job_completed(
             job_id=job_id,
@@ -90,7 +135,3 @@ def run_pipeline(job_id: str) -> None:
     finally:
         stop_heartbeat.set()
         heartbeat_thread.join(timeout=2)
-        if source_temp_path and os.path.exists(source_temp_path):
-            os.remove(source_temp_path)
-        if output_temp_path and os.path.exists(output_temp_path):
-            os.remove(output_temp_path)
