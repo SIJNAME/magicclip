@@ -1,18 +1,13 @@
-# pip install -r requirements.txt
 fastapi
 uvicorn
-python-multipart
-python-dotenv
 pydantic
+python-multipart
+email-validator
+PyJWT
 openai
-groq
-yt-dlp
-requests
-authlib
-httpx
-itsdangerous
-scikit-learn
-numpy
-opencv-python-headless
 redis
 rq
+stripe
+boto3
+psycopg2-binary
+groq
